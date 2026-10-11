@@ -1,0 +1,6 @@
+interface:
+  display_name: "提示词优化"
+  short_description: "结合对话上下文优化提示词表达与结构，保持原语言、原意和全部已有约束"
+  default_prompt: "请使用 $prompt-optimizer 优化以下原始提示词，保留原语言、原意和全部已有约束。"
+policy:
+  allow_implicit_invocation: true
