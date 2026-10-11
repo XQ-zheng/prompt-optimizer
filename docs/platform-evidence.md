@@ -14,4 +14,14 @@
 | DSH | [Web skill UI](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/client/ui-skill/README.md) | `/` 候选及直接 `/name`，文档说明 Web / TUI / ACP 一致；同名宿主命令优先 | 使用当前文档，没有采用旧归档 `/skill:name` 作为当前入口 |
 | DSH | [Web commands UI](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/client/ui-commands/README.md) | 原生 `/` / `+` 菜单属于宿主 UI，客户端扩展需插件 API | 技能 Markdown 本身不注册固定按钮 |
 
-“本包未实现按钮”是实现事实；“未核实公开扩展入口”只表示上述来源不建立该能力，不断言平台永远无法支持插件。今后平台变更，应更新教程与验证范围后再发布版本。
+旧 V1.0 / V1.1 的“未实现按钮”仅描述当时的纯 Skill；V1.2 的 DSH 配套插件现已实现输入框按钮。“未核实公开扩展入口”只表示上述来源不建立该能力，不断言平台永远无法支持插件。今后平台变更，应更新教程与验证范围后再发布版本。
+## V1.2 DSH 按钮补充依据
+
+本次以已安装的 DSH **0.1.0-rc.6** 为实际适配目标，直接核对发布包的类型和实现，并运行真实 Web 浏览器测试：
+
+- `@deepseek-ai/dsh-client-ui-conversation` 的 `client/contract/slots`：`conversation.input.right` 为 session 作用域 list，位于输入框工具行发送按钮前；标准 props 含 `sessionId`、`useSession`、`useInput`、`inputActions`。
+- rc.6 `inputActions.setDraft` 为公开文字写入路径；本插件只在同会话、同 revision、plain phase、无引用芯片时调用，不使用编辑器 DOM 改写。
+- `@deepseek-ai/dsh-host-apiproxy` 的 `apiProxy.sessions.models` 返回当前选中 provider/model/effort；`@deepseek-ai/dsh-llm` 的 `llm.stream` 支持一次性无工具请求和 AbortSignal。没有在前端复制凭据或启动另一代理执行原文。
+- [DSH 官方 ui-conversation 文档](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/client/ui-conversation/README.md) 提供插槽与标准输入接口概念。master 会继续变化，不能把后续 master 的输入动作视为 rc.6 已存在的接口；本次安装包绑定 rc.6 实测。
+
+这些接口使 DSH 配套插件能够添加真实输入框按钮，取代旧版“未实现 UI 插件”的 DSH 边界说明。其他平台没有因此获得按钮扩展能力。测试范围见 [DSH 验证记录](dsh-validation.md)。

@@ -1,14 +1,16 @@
 # 提示词优化 · Prompt Optimizer
 
-[MIT](LICENSE) · [Release V1.1](https://github.com/XQ-zheng/prompt-optimizer/releases/tag/V1.1) · [更新日志](CHANGELOG.md)
+[MIT](LICENSE) · [Release V1.2](https://github.com/XQ-zheng/prompt-optimizer/releases/tag/V1.2) · [更新日志](CHANGELOG.md)
 
 接收原始提示词，结合智能体可见且已确认的对话上下文理解真实意图，改善用词、逻辑与结构。保持原语言、原意及全部已有约束，不擅自增加需求或技术栈；优化阶段不生成代码。
+
+**V1.2 新增 DSH 输入框按钮插件：** 在 DeepSeek Harness Web 输入框内点击「增强提示」，预览原文与优化版，确认后替换草稿，无需手动调用 Skill，也不会自动发送。使用 DSH 当前会话模型。下载 `dsh-prompt-enhancer-1.2.0.tgz` 并按 [DSH 插件安装与使用](dsh-prompt-enhancer/README.md) 安装；仅适配本机 Web，其他智能体不新增按钮或更改行为。原 Skill 仍是 V1.1，单独技能 ZIP 保持原样。
 
 **V1.1 新增 Codex 默认预处理模式：** 完成一次设置后，普通消息发送到 Codex，就先在内部整理任务，再直接回答或执行原任务，不需要“优化提示词”关键词或手动调用 Skill。用户明确要求优化提示词时，仍分开展示原文与优化版，不执行待改写任务。其它平台未配置默认模式时保持显式改写。
 
 这是**消息送达后、同一个 Codex 智能体内部的处理流程**。原文先被 Codex 接收，无法做到模型理解原文之前由 Skill 拦截再转交；也不会替换消息历史或添加输入框按钮。原文与用户已确认的约束始终是权威来源。
 
-这是纯指令 Skill：无执行脚本，无额外模型 API、MCP 或运行时依赖；由使用它的智能体完成改写。它不能读取未提供的历史对话或其它平台的聊天记录。
+`prompt-optimizer/` 是纯指令 Skill：无执行脚本，无额外模型 API、MCP 或运行时依赖；由使用它的智能体完成改写。它不能读取未提供的历史对话或其它平台的聊天记录。另新增的 `dsh-prompt-enhancer/` 是可选的 DSH Web 配套插件，有独立的运行依赖，不要混用两种安装包。
 
 ## 功能与输入输出
 
@@ -55,6 +57,7 @@ prompt-optimizer/              仓库根目录
 ├── README.md                  四平台教程
 ├── CHANGELOG.md
 ├── LICENSE
+├── dsh-prompt-enhancer/        V1.2 DSH 输入框插件（独立 npm 包）
 ├── docs/
 │   ├── platform-evidence.md    平台依据与边界
 │   └── validation.md           行为评估记录
@@ -243,7 +246,9 @@ CLI / IDE 可以输入 `/skills` 或 `$` 查找；桌面应用以所在版本的
 
 ### 配置与使用
 
-正常发行配置需有技能 registry、filesystem provider 与模型消费工具；官方文档对应 `dsh-skill`、`dsh-skill-filesystem`、`dsh-tool-skill`。本包不需要额外插件，不应通过 `dsh plugin add` 把这个纯 Skill 当 npm 插件安装。
+正常发行配置需有技能 registry、filesystem provider 与模型消费工具；官方文档对应 `dsh-skill`、`dsh-skill-filesystem`、`dsh-tool-skill`。纯 Skill 不需要额外插件，不应通过 `dsh plugin add` 把技能 ZIP 当 npm 插件安装。
+
+**输入框按钮（V1.2，可选）：** 从 [V1.2 Release](https://github.com/XQ-zheng/prompt-optimizer/releases/tag/V1.2) 下载 `dsh-prompt-enhancer-1.2.0.tgz`，执行 `dsh plugin --profile web add ./dsh-prompt-enhancer-1.2.0.tgz`，重启 `dsh web` 并刷新页面。输入文字后直接点击输入框右侧的「增强提示」→ 核对预览 →「替换草稿」。插件复用 DSH 当前模型，无需新 Key；纯 Skill 的手动调用方式继续可用。目录、源码安装、上下文选项与配置边界见 [插件教程](dsh-prompt-enhancer/README.md)。
 
 自定义 profile / preset 若看不到技能，检查是否启用上述组件、是否设了 `includeDefaultRoots: false`、模型工具视图是否包含 `skill`；按当前版本的设置界面配置，本文不提供可能覆盖用户配置的通用补丁。需要非默认目录时，由 filesystem provider 的 `customSkillDirs` 指向**技能根目录**而非 `SKILL.md`。
 
@@ -266,7 +271,7 @@ CLI / IDE 可以输入 `/skills` 或 `$` 查找；桌面应用以所在版本的
 - **列表中没有技能：** 检查工作目录、配置根路径、provider 与 preset；技能目录不能多层嵌套。格式错误可能被警告后跳过。
 - **加载到旧版本：** 项目目录优先于用户目录，检查同名 Skill 是否遮蔽新安装文件。
 - **没有自动调用：** 检查模型是否有 `skill` 工具、目录是否可读、是否显式禁止 model invocation；本包默认不禁止自动调用。
-- **想要左下角固定按钮：** 当前 `/` 技能候选是原生入口。普通 Skill 不注册固定按钮；此需求需要另做 UI 插件并适配 DSH 版本，本版本没有实现。不存在由本包注册的专属热键。
+- **想要输入框内按钮：** V1.2 配套插件已实现本机 DSH Web 原生输入框右侧「增强提示」按钮，普通 Skill 目录本身不注册按钮。空草稿、引用芯片或不可编辑状态下禁用。没有新增专属热键；Esc 关闭增强预览。Electron、远程代理和子智能体输入框暂未适配。
 
 ## 增强自动触发（可选）
 

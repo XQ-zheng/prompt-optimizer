@@ -1,0 +1,19 @@
+{
+  "name": "dsh-prompt-enhancer",
+  "version": "1.2.0",
+  "description": "DeepSeek Harness 输入框内的增强提示按钮，预览确认后替换草稿",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { ".": "./lib/index.js", "./client": "./lib/client.js", "./package.json": "./package.json" },
+  "files": ["lib", "src", "cordis.patch.yml", "README.md", "LICENSE", "build.mjs"],
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/XQ-zheng/prompt-optimizer.git", "directory": "dsh-prompt-enhancer" },
+  "engines": { "node": ">=22" },
+  "scripts": { "build": "node build.mjs", "test": "node --test tests/*.test.mjs" },
+  "devDependencies": { "esbuild": "0.25.12" },
+  "dependencies": { "@deepseek-ai/dsh-llm": "0.1.0-rc.6" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "inject": ["@deepseek-ai/dsh-client-ui-slots", "@deepseek-ai/dsh-client-ui-conversation", "@deepseek-ai/dsh-client-runtime"] }
+  }
+}
