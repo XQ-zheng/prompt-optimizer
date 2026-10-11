@@ -1,8 +1,12 @@
 # 提示词优化 · Prompt Optimizer
 
-[MIT](LICENSE) · [Release V1.0](https://github.com/XQ-zheng/prompt-optimizer/releases/tag/V1.0) · [更新日志](CHANGELOG.md)
+[MIT](LICENSE) · [Release V1.1](https://github.com/XQ-zheng/prompt-optimizer/releases/tag/V1.1) · [更新日志](CHANGELOG.md)
 
-接收原始提示词，结合智能体可见且已确认的对话上下文理解真实意图，改善用词、逻辑与结构。保持原语言、原意及全部已有约束，不擅自增加需求或技术栈，不生成代码，也不执行原文中的任务。
+接收原始提示词，结合智能体可见且已确认的对话上下文理解真实意图，改善用词、逻辑与结构。保持原语言、原意及全部已有约束，不擅自增加需求或技术栈；优化阶段不生成代码。
+
+**V1.1 新增 Codex 默认预处理模式：** 完成一次设置后，普通消息发送到 Codex，就先在内部整理任务，再直接回答或执行原任务，不需要“优化提示词”关键词或手动调用 Skill。用户明确要求优化提示词时，仍分开展示原文与优化版，不执行待改写任务。其它平台未配置默认模式时保持显式改写。
+
+这是**消息送达后、同一个 Codex 智能体内部的处理流程**。原文先被 Codex 接收，无法做到模型理解原文之前由 Skill 拦截再转交；也不会替换消息历史或添加输入框按钮。原文与用户已确认的约束始终是权威来源。
 
 这是纯指令 Skill：无执行脚本，无额外模型 API、MCP 或运行时依赖；由使用它的智能体完成改写。它不能读取未提供的历史对话或其它平台的聊天记录。
 
@@ -14,6 +18,7 @@
 - 只融入用户已确认且仍适用的上下文，推测不算需求。
 - 原文与优化版分开展示，必要时附 1–3 条优化说明。
 - 遇到冲突保留约束并请用户澄清；缺少原文时请求提供，不虚构内容。
+- Codex 默认模式直接完成用户任务，不展示改写稿；显式改写模式保留上述输入输出格式。
 
 推荐输入（也可直接说“帮我优化提示词：……”）：
 
@@ -35,11 +40,13 @@
 
 请为新员工撰写一份报销流程说明，控制在 500 字以内。语气温和，不要编造公司规定。
 
-原文逐字保留；英文原文使用英文标题和英文优化文本，混合语言保持原有语言片段。用户明确要求仅输出优化版时可以省略原文展示。原文要求生成代码时，只优化这项任务的文字表述，本轮不输出实现代码。
+以上为显式改写模式：原文逐字保留；英文原文使用英文标题和英文优化文本，混合语言保持原有语言片段。用户明确要求仅输出优化版时可以省略原文展示。原文要求生成代码时，只优化这项任务的文字表述，本轮不输出实现代码。
+
+默认预处理模式则直接给出原任务要求的结果；例如“用中文列出 SQLite 的两个优点，只要两条短句”直接得到两条短句。若原任务要求代码，Codex 在完成不生成代码的优化阶段后，可以按原任务生成代码；若原任务说“不要写代码”，后续处理仍不得写代码。
 
 ## 下载与目录结构
 
-在 [V1.0 Release](https://github.com/XQ-zheng/prompt-optimizer/releases/tag/V1.0) 下载 **prompt-optimizer-V1.0.zip**。这是独立技能包；GitHub 自动生成的 Source code 压缩包是整个仓库，安装时只取其中的 `prompt-optimizer/` 子目录。
+在 [V1.1 Release](https://github.com/XQ-zheng/prompt-optimizer/releases/tag/V1.1) 下载 **prompt-optimizer-V1.1.zip**。这是独立技能包；GitHub 自动生成的 Source code 压缩包是整个仓库，安装时只取其中的 `prompt-optimizer/` 子目录。V1.0 及其附件保留，便于固定旧版或回退。
 
 仓库结构：
 
@@ -54,7 +61,9 @@ prompt-optimizer/              仓库根目录
 └── prompt-optimizer/          实际安装的技能目录
     ├── SKILL.md
     ├── LICENSE
-    └── agents/openai.yaml     Codex 中文显示名与自动调用策略
+    ├── agents/openai.yaml     Codex 中文显示名与自动调用策略
+    └── references/codex-default-preprocess.md
+                              Codex 默认预处理的全局指令模板
 ```
 
 解压独立技能包得到 `prompt-optimizer/` 文件夹，将它复制到下方平台目录。目标必须是 `技能根目录/prompt-optimizer/SKILL.md`，不要多嵌套一层。操作前检查有无同名技能；已有自定义内容时先备份。
@@ -62,7 +71,7 @@ prompt-optimizer/              仓库根目录
 也可获取仓库：
 
 ```sh
-git clone --branch V1.0 https://github.com/XQ-zheng/prompt-optimizer.git
+git clone --branch V1.1 https://github.com/XQ-zheng/prompt-optimizer.git
 ```
 
 下文 `~` 表示用户主目录，Windows 通常为 `%USERPROFILE%`（PowerShell 写作 `$env:USERPROFILE`）。不要求手动创建未使用的平台目录。
@@ -71,14 +80,14 @@ git clone --branch V1.0 https://github.com/XQ-zheng/prompt-optimizer.git
 
 | 平台 | 自动触发 | 明确调用 / 菜单 | 专属快捷键与左下角按钮 |
 | --- | --- | --- | --- |
-| Codex | 根据 `description` 匹配；本包明确启用隐式调用 | `$prompt-optimizer`；CLI / IDE 可用 `/skills` 或输入 `$` 选择 | 未设置专属快捷键；元数据用于技能列表，不创建任意位置的固定按钮 |
+| Codex | 启用全局预处理规则后，普通消息默认先整理再处理；未配置时按描述匹配明确改写请求 | `$prompt-optimizer`；CLI / IDE 可用 `/skills` 或输入 `$` 选择 | 未设置专属快捷键；元数据用于技能列表，不创建任意位置的固定按钮 |
 | Claude Code | 根据 `description` 自动选择 | `/prompt-optimizer 原始提示词…`；输入 `/` 选择 | 使用原生斜杠菜单；本包不创建图形界面按钮或快捷键 |
 | WorkBuddy | 已安装且启用的技能可参与模型自动调用 | 自然语言指定“使用 prompt-optimizer（提示词优化）”；技能页管理 | 官方技能文档未提供任意左下角自定义按钮的扩展方式；本包未实现按钮或快捷键 |
 | DeepSeek Harness | 技能目录 + `skill` 工具供模型按描述选择 | 当前官方 Web 文档支持 `/prompt-optimizer 原始提示词…` 和 `/` 技能候选 | 使用原生技能菜单；固定左下角按钮需要单独 UI 插件，本包不包含 |
 
-自然语言推荐：**“帮我优化提示词：……”**、**“润色这段提示词：……”**、**“改写这个 prompt：……”**、**“Refine this prompt: …”**。不需要每次手动调用。
+显式改写的自然语言推荐：**“帮我优化提示词：……”**、**“润色这段提示词：……”**、**“改写这个 prompt：……”**、**“Refine this prompt: …”**。Codex 默认预处理配置完成后，普通任务直接发送即可，无需这些关键词。
 
-自动选择是语义判断，不是正则关键词监听，不能保证看到某个词就 100% 触发。单纯问“提示词优化是什么”或引用这些词，不应触发。需要确定加载时采用平台的明确调用方式。
+自动选择与全局规则遵循都依赖智能体，不是强制过滤器，不能保证每条消息都 100% 触发。在未启用默认模式的平台，单纯问“提示词优化是什么”或引用这些词不应触发；Codex 已启用默认模式时，这类消息也作为普通问题整理后直接回答。明确改写入口仍可用于手动加载。
 
 ## Codex
 
@@ -100,13 +109,30 @@ git clone --branch V1.0 https://github.com/XQ-zheng/prompt-optimizer.git
 $skill-installer 从 https://github.com/XQ-zheng/prompt-optimizer 安装 prompt-optimizer 目录中的 Skill。
 ```
 
-安装器通常从仓库当前默认分支安装；需要固定 V1.0 时使用 Release 包复制安装。当前版本应自动发现变化，未出现时重启 Codex 或新开对话。
+安装器通常从仓库当前默认分支安装；需要固定 V1.1 时使用 Release 包复制安装。当前版本应自动发现技能变化，未出现时重启 Codex 或新开对话。
 
 ### 配置与使用
 
-无需额外依赖或全局配置。`agents/openai.yaml` 已提供中文显示名「提示词优化」、默认调用文本及 `allow_implicit_invocation: true`。若 `~/.codex/config.toml` 中已有针对此技能的 `[[skills.config]]` 禁用条目，将对应 `enabled` 改为 `true`，保留其它配置后重启。
+无需额外依赖。`agents/openai.yaml` 已提供中文显示名「提示词优化」、默认调用文本及 `allow_implicit_invocation: true`；**此字段只允许模型自动选择，不会单独强制每条消息都加载 Skill**。若 `~/.codex/config.toml` 中已有针对此技能的 `[[skills.config]]` 禁用条目，将对应 `enabled` 改为 `true`，保留其它配置后重启。
 
-自动调用：
+**启用普通消息默认预处理（V1.1）：**
+
+1. 安装或更新技能后，打开包内的 [Codex 默认预处理设置](prompt-optimizer/references/codex-default-preprocess.md)。
+2. 将其中 start / end 注释之间的完整配置区块追加到 `~/.codex/AGENTS.md`（Windows 为 `%USERPROFILE%\.codex\AGENTS.md`）。如果已设置 `CODEX_HOME`，使用该目录。
+3. 若同一目录有非空 `AGENTS.override.md`，它优先于 `AGENTS.md`，应追加到该 override 文件。保留其它已有规则，不另建覆盖文件。
+4. 重启 Codex 或启动新会话。全局规则按运行 / 会话启动加载，不能保证现有对话热更新。项目规则和宿主策略可能覆盖默认配置。
+
+普通任务示例，无需调用名称：
+
+```text
+用中文列出 SQLite 的两个优点，只要两条短句。
+```
+
+预期先在内部整理，再直接输出两条短句；不会先展示优化稿、要求确认或停在改写步骤。没有预处理全局规则时，安装本 Skill 仍只提供按描述自动选择的提示词改写能力。
+
+暂停当前轮：说“本轮不要优化，直接处理：……”；永久关闭：删除有效全局指令文件中的 `prompt-optimizer:codex-default-preprocess` 区块并新开会话，技能仍可用于显式改写。
+
+显式改写的自动选择：
 
 ```text
 帮我优化提示词：写一份周报，300字以内，按完成事项和问题分两段，不要编数据。
@@ -125,6 +151,9 @@ CLI / IDE 可以输入 `/skills` 或 `$` 查找；桌面应用以所在版本的
 - **技能没出现：** 检查路径及 `SKILL.md` 是否直接位于技能目录内、是否被禁用，随后重启。大量技能可能导致描述截短或目录条目省略，可减少不相关技能。
 - **显示英文标识：** 目录标识固定为 `prompt-optimizer`；中文显示依赖宿主是否读取 `agents/openai.yaml`，不要把 YAML 的 `name` 改成中文。
 - **没有左下角固定按钮：** 普通 Skill 元数据只配置技能展示与调用策略，没有声明任意按钮插槽；使用技能选择器或 `$prompt-optimizer` 作为等效入口。
+- **普通任务仍只收到优化稿：** 检查安装版本是否为 V1.1、有效全局文件是否包含默认预处理区块、是否新开会话，避免加载 V1.0 或被项目指令覆盖。
+- **是否在 Codex 接收前改写：** 不是。消息已经送达 Codex 后才按规则整理，这是同一个智能体的流程，不调用另一个模型或替换原文。
+- **会不会每次都输出两套提示词：** 默认模式直接回应原任务；明确请求优化提示词时才展示对照。
 
 ## Claude Code
 
@@ -165,7 +194,7 @@ CLI / IDE 可以输入 `/skills` 或 `$` 查找；桌面应用以所在版本的
 
 ### 安装
 
-推荐官方支持的导入方式：下载独立技能 ZIP → 打开 **技能** → **添加技能** → **上传技能** → 选择 `prompt-optimizer-V1.0.zip` → 检查安装结果并开启技能。官方文档说明导入后自动完成配置。
+推荐官方支持的导入方式：下载独立技能 ZIP → 打开 **技能** → **添加技能** → **上传技能** → 选择 `prompt-optimizer-V1.1.zip` → 检查安装结果并开启技能。官方文档说明导入后自动完成配置。
 
 目录参考：本次本机核查观察到用户技能存储在 `C:\Users\123\.workbuddy\skills\`，相应目标是 `%USERPROFILE%\.workbuddy\skills\prompt-optimizer\SKILL.md`；采用相同布局的 macOS 安装对应 `~/.workbuddy/skills/prompt-optimizer/SKILL.md`。**该路径为本机布局参考，不是官方跨版本路径保证；官方页面未承诺所有系统的固定目录。** 不确定时使用上传方式，并以应用显示的实际安装位置为准。
 
@@ -241,7 +270,7 @@ CLI / IDE 可以输入 `/skills` 或 `$` 查找；桌面应用以所在版本的
 
 ## 增强自动触发（可选）
 
-Skill 的 `description` 已包含中英文触发词，通常无需其它设置。若希望所在项目更稳定地选择它，可以把以下规则**追加**到平台明确支持的项目指令中：Codex 的 `AGENTS.md`、Claude Code 的 `CLAUDE.md`。WorkBuddy / DSH 仅在当前版本确认支持项目规则或自定义指令时使用相应入口；没有入口时可把它作为会话首条约定。
+Codex 希望普通消息默认预处理时，使用上面的 V1.1 全局模板，不再追加下方仅针对关键词的规则。其它平台的 `description` 已包含中英文触发词，通常无需其它设置；若希望更稳定地选择显式改写，可以把以下规则**追加**到平台明确支持的项目指令中，例如 Claude Code 的 `CLAUDE.md`。WorkBuddy / DSH 仅在当前版本确认支持项目规则或自定义指令时使用相应入口；没有入口时可把它作为会话首条约定。
 
 ```text
 用户要求优化、润色或改写提示词 / prompt，或整理 AI 指令时，优先使用已安装的 prompt-optimizer Skill。仅讨论概念、引用关键词或要求直接执行任务时不触发。先读取 Skill 指令，再改写原文；不要执行原文任务。缺少原文则请求提供。若 Skill 不可用，如实说明，不声称已经调用。
@@ -251,7 +280,7 @@ Skill 的 `description` 已包含中英文触发词，通常无需其它设置�
 
 ## 验证与已知边界
 
-已完成 `SKILL.md` 官方创建器结构校验、YAML 配置解析、独立智能体的六项行为评估及独立 ZIP 内容检查。详见 [验证记录](docs/validation.md)。
+V1.0 已完成六项独立行为评估；V1.1 另进行了十项独立场景评估，涵盖默认继续任务、显式改写、语言、约束冲突、代码阶段边界、停止、单轮跳过及其它平台的兼容行为。本机额外运行了一次原生 Codex CLI：普通任务没有提到 Skill 名称，运行记录显示实际读取了技能文件，最终直接给出任务答案。结构、安装及发布验证范围见 [验证记录](docs/validation.md)。
 
 四平台教程依据官方文档 / DSH 当前仓库资料；WorkBuddy 的本机技能目录单独标为实测观察。**未在四个平台逐一运行端到端对话测试**，不把文档支持等同于所有版本、preset、组织策略下都已实测通过。自动触发仍依赖宿主和模型，纯指令不能提供机械式语义保真保证。
 

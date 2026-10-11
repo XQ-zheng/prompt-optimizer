@@ -5,6 +5,7 @@
 | 平台 | 实际读取的来源 | 支持的主张 | 证据边界 |
 | --- | --- | --- | --- |
 | Codex | [Build skills](https://learn.chatgpt.com/docs/build-skills)，由 `developers.openai.com/codex/build-skills` 官方地址跳转 | 用户 / 项目 `.agents/skills`、按描述隐式选择、CLI / IDE 的 `$` 和 `/skills`、`openai.yaml`、`skills.config` | 文档未给出任意位置固定按钮注册字段；本机另存在 `.codex/skills` 兼容目录 |
+| Codex V1.1 全局配置 | [AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md) | Codex home 中非空 `AGENTS.override.md` 优先，随后 `AGENTS.md`；默认 `~/.codex`，可由 `CODEX_HOME` 指定；指令在运行 / 会话开始构建 | 用全局工作约定要求普通消息先预处理；不是模型接收前拦截，可能被项目指令或宿主策略覆盖 |
 | Claude Code | [Skills](https://code.claude.com/docs/en/skills) | `.claude/skills`、`/skill-name`、按描述自动选择、默认调用策略、旧 commands 合并为 skills | 本包不实现 UI 扩展，不设独立热键 |
 | WorkBuddy | [官方技能页面](https://www.workbuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market) | 添加技能 / 上传技能、导入后自动配置、关闭后不参与模型自动调用、从 `.agents` 等目录复制安装 | 页面未承诺跨系统固定存储路径、通用自定义斜杠调用或任意输入框按钮注册 |
 | WorkBuddy 本机观察 | 本机 `C:\Users\123\.workbuddy\skills\` 及其中的有效 `SKILL.md` | 本机技能存储布局 | 只观察目录，未向 WorkBuddy 导入或运行此 Skill；macOS 等效路径是布局参考 |
